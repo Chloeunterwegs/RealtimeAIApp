@@ -1,75 +1,78 @@
-## Experiment with a realtime conversational editor
+# RealtimeAI 桌面助手
 
-Demo video:
-[![Demo video](https://github.com/user-attachments/assets/66459cef-8e86-497b-ad8f-78fca30f5443)](https://youtu.be/H4BEF-VSDXQ)
+一个基于实时对话的智能桌面助手项目，通过语音+视觉多模态交互，实现自然、高效的人机交互体验。
 
-### Prerequisite
+演示视频:
+[![演示视频](https://github.com/user-attachments/assets/66459cef-8e86-497b-ad8f-78fca30f5443)](https://youtu.be/H4BEF-VSDXQ)
 
-You need either an OpenAI or Azure OpenAI account that has access to a `gpt-4o-realtime-preview` model. Also make sure you're on .NET 9 (`dotnet --version` should confirm this).
+## 环境要求
 
-#### To use OpenAI:
-
-In `Program.cs`, uncomment the following lines, and comment out the equivalent Azure OpenAI ones:
-
-```cs
-var openAiClient = new OpenAIClient(
-    builder.Configuration["OpenAI:Key"]!);
+1. 安装 .NET 9 (`dotnet --version` 可以确认版本)
+2. 安装 Ollama (https://ollama.com/download)
+3. 拉取所需模型:
+```bash
+ollama pull llama2
 ```
 
-Then use the command line/terminal to add your OpenAI API key to the .NET user secrets feature:
+### Ollama 配置:
 
+1. 确保 Ollama 服务运行在默认端口 (11434)
+2. 验证 Ollama API 是否正常工作:
+```bash
+curl http://localhost:11434/api/chat/completions \
+    -H "Content-Type: application/json" \
+    -d '{
+        "model": "llama2",
+        "messages": [
+            {
+                "role": "user",
+                "content": "你好"
+            }
+        ]
+    }'
 ```
-dotnet user-secrets set "OpenAI:Key" abcdef...
-```
 
-#### To use Azure OpenAI:
+## 运行方式
 
-First use Azure OpenAI Studio to deploy a `gpt-4o-realtime-preview` model to Azure OpenAI. **Make sure the deployment name is actually `gpt-4o-realtime-preview`**, or if not, go and edit the following line in `Program.cs` to put in your deployment name:
+从 Visual Studio 或 VS Code 使用 Ctrl+F5 运行,或在控制台中执行:
 
-```cs
-var realtimeClient = openAiClient.GetRealtimeConversationClient("gpt-4o-realtime-preview");
-```
-
-Then use the command line/terminal to set the Azure OpenAI resource endpoint and API key:
-
-```
+```bash
 cd RealtimeFormApp
-dotnet user-secrets set "AzureOpenAI:Endpoint" https://YOUR-RESOURCE.openai.azure.com/
-dotnet user-secrets set "AzureOpenAI:Key" abcdef...
-```
-
-### How to run
-
-Run from Visual Studio or VS Code with Ctrl+F5 or from the console:
-
-```
 dotnet run
 ```
 
-This should automatically open a browser at http://localhost:5174/. The browser will ask permission to access your mic; be sure to grant it.
+这将自动在 http://localhost:5174/ 打开浏览器。浏览器会请求麦克风访问权限,请确保允许。
 
-You can now click the microphone icon to connect and then describe a vehicle to list for sale, or ask for edits to the content of the form.
+## 语音输出设置
 
-### Getting voice output
-
-You might prefer not to hear the voice output since you can read the text overlay faster than listen to speech, but if you do want to try hearing audio output, go into `RealtimeConversationManager.cs` and comment out this line:
+如果你不想听到语音输出(因为可以更快地阅读文本),但如果你想尝试听到音频输出,请在 `RealtimeConversationManager.cs` 中注释掉这行:
 
 ```cs
 ContentModalities = ConversationContentModalities.Text,
 ```
 
-Now it will revert to the default modalities, which are text+speech.
+现在它将恢复为默认模式(文本+语音)。
 
-If you want more of a two-way conversation, consider updating the prompt in `RealtimeConversationManager.cs` to remove the phrase `Do not reply to them unless they explicitly ask for your input; just listen`. Now it will be more inclined to respond in detail instead of just replying "OK".
+如果你想要更多的双向对话,考虑更新 `RealtimeConversationManager.cs` 中的提示,删除短语 `Do not reply to them unless they explicitly ask for your input; just listen`。这样它会更倾向于详细回应而不是仅回复"OK"。
 
-### Troubleshooting
+## 故障排除
 
-If you click the microphone and it says "Connecting..." but *doesn't* then say "Connected", you may be hitting a rate limit. `gpt-4o-realtime-preview` currently allows at most 10 connections/minute, or one connection every 6 seconds. So if you only just reloaded the page, wait a few seconds before reloading and trying again. There isn't a lot of error handling in this prototype.
+如果点击麦克风后显示"Connecting..."但没有显示"Connected",可能是遇到了速率限制。`gpt-4o-realtime-preview` 目前每分钟最多允许10个连接,或每6秒一个连接。所以如果你刚刚重新加载页面,请等待几秒钟再重试。
 
-## How it works
+## 工作原理
 
-There's an object model defined in `CarDescriptor.cs`. This is formatted as a JSON schema in the prompt, so the AI knows what kinds of data and edits are allowed.
+在 `CarDescriptor.cs` 中定义了一个对象模型。这个模型以 JSON schema 的形式在提示中呈现，这样 AI 就知道允许什么样的数据和编辑。
 
-The AI is told there's a JSON document that it should update based on whatever the user asks. This JSON document is two-way bound to the UI, so any changes made by the AI are shown in the UI, and any changes made by the user are visible to the AI.
+AI 被告知有一个 JSON 文档需要根据用户的要求进行更新。这个 JSON 文档与 UI 双向绑定，所以 AI 做的任何更改都会显示在 UI 中，用户做的任何更改也会对 AI 可见。
 
-Note that `RealtimeConversationManager` is generically typed so the same logic there should work for editing other data schemas.
+注意 `RealtimeConversationManager` 是泛型类型的，所以同样的逻辑也适用于编辑其他数据模式。
+
+## 技术栈
+
+- Blazor WebAssembly
+- SignalR
+- .NET 8
+- Ollama (本地 LLM)
+- YOLO/MediaPipe (视觉识别)
+- Web Speech API (语音识别)
+- Three.js/Babylon.js (3D渲染)

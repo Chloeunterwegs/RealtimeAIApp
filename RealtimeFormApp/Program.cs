@@ -10,20 +10,15 @@ builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents(o => o.DetailedErrors = true);
 
 // -----------------------------------------------------------------------------------
-// YOU MUST ENABLE ONE OF THE FOLLOWING (FOR EITHER OPENAI OR AZURE OPENAI)
-/*
-// If using OpenAI:
-var openAiClient = new OpenAIClient(
-    builder.Configuration["OpenAI:Key"]!);
-*/
+// Using Ollama with OpenAI compatibility layer
+var openAiClient = new OpenAIClient(new OpenAIClientOptions
+{
+    BaseAddress = new Uri("http://localhost:11434/v1"), // Ollama API endpoint
+    ApiKey = "ollama" // required but unused for Ollama
+});
 
-// If using Azure OpenAI:
-var openAiClient = new AzureOpenAIClient(
-    new Uri(builder.Configuration["AzureOpenAI:Endpoint"]!),
-    new ApiKeyCredential(builder.Configuration["AzureOpenAI:Key"]!));
-// -----------------------------------------------------------------------------------
-
-var realtimeClient = openAiClient.GetRealtimeConversationClient("gpt-4o-realtime-preview");
+// Configure the realtime client to use local Ollama model
+var realtimeClient = openAiClient.GetRealtimeConversationClient("llama2"); // 或其他你想使用的模型
 builder.Services.AddSingleton(realtimeClient);
 
 var app = builder.Build();
